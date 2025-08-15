@@ -5,32 +5,40 @@ import requests
 from io import BytesIO
 from datetime import datetime
 
-# 🔑 Hardcoded API key (local use only)
-client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# 🔑 OpenAI API key (use st.secrets for Streamlit Cloud)
+client = openai.OpenAI(
+    api_key="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"
+)
+
 st.title("🖼️ JarvisAI Image Generator")
 prompt = st.text_input("Enter your image prompt")
 
 if st.button("Generate Image") and prompt:
-    with st.spinner("Generating..."):
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1
-        )
-        image_url = response.data[0].url
-        image_data = requests.get(image_url).content
-        image = Image.open(BytesIO(image_data))
+    try:
+        with st.spinner("Generating image..."):
+            response = client.images.generate(
+                model="dall-e-2",  # ✅ Use supported model
+                prompt=prompt,
+                size="1024x1024",
+                n=1
+            )
+            image_url = response.data[0].url
+            image_data = requests.get(image_url).content
+            image = Image.open(BytesIO(image_data))
 
-        # 🖋️ Watermark
-        draw = ImageDraw.Draw(image)
-        font = ImageFont.load_default()
-        draw.text((10, 10), "JarvisAI", font=font, fill=(255, 255, 255))
+            # 🖋️ Add watermark
+            draw = ImageDraw.Draw(image)
+            font = ImageFont.load_default()
+            draw.text((10, 10), "JarvisAI", font=font, fill=(255, 255, 255))
 
-        # 💾 Save image
-        filename = f"jarvisai_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        image.save(filename)
+            # 💾 Save image locally
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"jarvisai_image_{timestamp}.png"
+            image.save(filename)
 
-        st.image(image, caption="Generated Image", use_column_width=True)
-        st.success(f"Saved as {filename}")
+            # 📤 Display image
+            st.image(image, caption="Generated Image", use_column_width=True)
+            st.success(f"Saved as {filename}")
+
+    except Exception as e:
+        st.error("⚠️ Image generation failed. Try a different prompt or check your API key.")
