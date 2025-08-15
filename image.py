@@ -1,31 +1,38 @@
 import streamlit as st
-import openai
 import requests
-from PIL import Image
-from io import BytesIO
 
-openai.api_key = "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"
+# 🔐 Set your Groq API key
+GROQ_API_KEY = "your_groq_api_key"
 
-st.title("🖼️ JarvisAI Image Generator")
-prompt = st.text_input("Describe the image you want to generate")
+# 📤 Image generation function
+def generate_image(prompt, size="1024x1024"):
+    url = "https://api.groq.com/openai/v1/images/generations"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "stable-diffusion-xl",
+        "prompt": prompt,
+        "n": 1,
+        "size": size
+    }
 
-if st.button("Generate Image") and prompt:
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4-vision-preview",
-            messages=[
-                {"role": "user", "content": [
-                    {"type": "text", "text": f"Generate an image of: {prompt}"}
-                ]}
-            ],
-            temperature=0.7,
-            max_tokens=1000
-        )
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        return response.json()["data"][0]["url"]
+    else:
+        st.error("Image generation failed.")
+        return None
 
-        image_url = response["choices"][0]["message"]["content"]["parts"][0]["image_url"]
-        image_data = requests.get(image_url).content
-        image = Image.open(BytesIO(image_data))
-        st.image(image, caption="Generated Image", use_column_width=True)
+# 🖼️ Streamlit UI
+st.title("🧠 JarvisAI Image Generator (Groq SDXL)")
+prompt = st.text_input("Enter your image prompt", "a modular AI assistant in a cyberpunk lab")
+size = st.selectbox("Select image size", ["512x512", "768x768", "1024x1024"])
 
-    except Exception as e:
-        st.error("⚠️ Image generation failed. Try a simpler prompt or check your API key.")
+if st.button("Generate Image"):
+    with st.spinner("Generating..."):
+        image_url = generate_image(prompt, size)
+        if image_url:
+            st.image(image_url, caption="Generated Image", use_column_width=True)
+            st.markdown(f"[Download Image]({image_url})")
