@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # 🔐 Set your Groq API key
-GROQ_API_KEY = "your_groq_api_key"
+GROQ_API_KEY = "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"
 
 # 📤 Image generation function
 def generate_image(prompt, size="1024x1024"):
@@ -36,3 +36,4 @@ if st.button("Generate Image"):
         if image_url:
             st.image(image_url, caption="Generated Image", use_column_width=True)
             st.markdown(f"[Download Image]({image_url})")
+
